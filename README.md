@@ -1,5 +1,7 @@
 # toposort
 
+[![toposort](https://circleci.com/gh/ayecue/toposort.svg?style=svg)](https://circleci.com/gh/ayecue/toposort)
+
 TopoSort is a simple and efficient topological sorting algorithm for directed graphs. It helps you determine a linear ordering of vertices such that for every directed edge `u -> v`, vertex `u` comes before `v` in the ordering.
 
 ## Features
