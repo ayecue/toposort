@@ -1,6 +1,6 @@
 node_modules
 src
-test
+tests
 jest.config.js
 test.js
 test.ts
