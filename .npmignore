@@ -1,6 +1,9 @@
-dist
 node_modules
+src
 test
 jest.config.js
 test.js
 test.ts
+benchmark.ts
+tsconfig.json
+eslint.config.mjs
