@@ -4,6 +4,7 @@ const batchingToposort = require('batching-toposort');
 import { toposort as seriouscoderoneToposort } from '@seriouscoderone/toposort';
 import { toposort as n1ru4lToposort } from "@n1ru4l/toposort";
 import { diff } from 'deep-object-diff';
+const Benchmarkify = require("benchmarkify");
 
 // generate mock data
 function generateMock() {
@@ -35,17 +36,9 @@ function generateMock() {
   }
 }
 
-const { nodes, edges, graph, graphMap } = generateMock();
-const iterations = 10000;
-const output: Record<string, string[]> = {};
-
-function benchmark(name: string, fn: any, normalize: (input: any) => string[] = (input: any) => input) {
+// Utils
+function register(name: string, fn: any, normalize: (input: any) => string[] = (input: any) => input) {
   output[name] = normalize(fn());
-  const start = Date.now();
-  for (let i = 0; i < iterations; i++) {
-    fn();
-  }
-  console.log('-', name, Date.now() - start, 'ms');
 }
 
 const normalizeBatchingToposort = (output: ReturnType<typeof batchingToposort>) => {
@@ -60,15 +53,23 @@ const normalizeN1ru4lToposort = (output: ReturnType<typeof n1ru4lToposort>) => {
   return result;
 };
 
-console.log(`Benchmarking with ${nodes.length} nodes and ${edges.length} edges (${iterations} iterations)`);
-benchmark('fast-toposort', () => fastToposort.toposort(nodes, edges));
-benchmark('toposort', () => toposort.array(nodes, edges));
-benchmark('batching-toposort', () => batchingToposort(graph), normalizeBatchingToposort);
-benchmark('@seriouscoderone/toposort', () => seriouscoderoneToposort(nodes, edges));
-benchmark('@n1ru4l/toposort', () => n1ru4lToposort(new Map(graphMap)), normalizeN1ru4lToposort);
+// run benchmark
+const { nodes, edges, graph, graphMap } = generateMock();
+const output: Record<string, string[]> = {};
 
+const fastToposortCallback = () => fastToposort.toposort(nodes, edges);
+const toposortCallback = () => toposort.array(nodes, edges);
+const batchingToposortCallback = () => batchingToposort(graph);
+const seriouscoderoneToposortCallback = () => seriouscoderoneToposort(nodes, edges);
+const n1ru4lToposortCallback = () => n1ru4lToposort(new Map(graphMap));
 
-console.log('Comparing results...');
+register('fast-toposort', fastToposortCallback);
+register('toposort', toposortCallback);
+register('batching-toposort', batchingToposortCallback, normalizeBatchingToposort);
+register('@seriouscoderone/toposort', seriouscoderoneToposortCallback);
+register('@n1ru4l/toposort', n1ru4lToposortCallback, normalizeN1ru4lToposort);
+
+console.log('Comparing output...');
 const diff1 = diff(output['fast-toposort'], output['toposort']);
 const diff2 = diff(output['fast-toposort'], output['batching-toposort']);
 const diff3 = diff(output['fast-toposort'], output['@seriouscoderone/toposort']);
@@ -78,3 +79,15 @@ console.log('fast-toposort vs toposort:', Object.values(diff1).length === 0 ? 'N
 console.log('fast-toposort vs batching-toposort:', Object.values(diff2).length === 0 ? 'No difference' : diff2);
 console.log('fast-toposort vs @seriouscoderone/toposort:', Object.values(diff3).length === 0 ? 'No difference' : diff3);
 console.log('fast-toposort vs @n1ru4l/toposort:', Object.values(diff4).length === 0 ? 'No difference' : diff4);
+
+const benchmark = new Benchmarkify("Benchmark");
+
+console.log('Start benchmark...');
+benchmark.createSuite("toposearch", { time: 1000, description: "Testing toposearch" })
+  .add('fast-toposort', fastToposortCallback)
+  .add('toposort', toposortCallback)
+  .add('batching-toposort', batchingToposortCallback)
+  .add('@seriouscoderone/toposort', seriouscoderoneToposortCallback)
+  .add('@n1ru4l/toposort', n1ru4lToposortCallback);
+
+benchmark.run();
