@@ -9,7 +9,7 @@ TopoSort is a simple and efficient topological sorting algorithm for directed gr
 - Efficient topological sorting using Kahn's Algorithm.
 - Cycle detection to identify circular dependencies.
 - About `2x` faster compared to established libraries.
-  - Benchmarking with 1000 nodes and 1107 edges (10000 iterations) ![Benchmark](assets/benchmark.png)
+  - Benchmarking with 1000 nodes and 1107 edges (10000 iterations) ![Benchmark](https://github.com/ayecue/toposort/blob/main/assets/benchmark.png?raw=true)
 - Supports ES Modules (ESM) and Node.js.
 
 ## Installation

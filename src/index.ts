@@ -9,6 +9,8 @@ export type NodeIdx = number;
 export type RefMap = Map<Node, NodeIdx>;
 export type Edge = [NodeIdx, NodeIdx];
 export type Graph = Set<NodeIdx>[];
+export type LNode = { next?: LNode, value: NodeIdx };
+export type LRoot = { first: LNode, last: LNode };
 
 function buildGraphFromEdges(refMap: RefMap, edges: EdgesObject): Graph {
   const graph: Graph = new Array(refMap.size);
@@ -53,6 +55,26 @@ export function toposortWithGraph(graph: GraphObject): Node[] {
   return toposort(Array.from(actualNodes), edges);
 }
 
+function pushNodeToList(llRoot: LRoot, nodeIdx: NodeIdx): void {
+  const node: LNode = { value: nodeIdx };
+  if (llRoot.first == null) {
+    llRoot.first = node;
+  } else {
+    llRoot.last.next = node;
+  }
+  llRoot.last = node;
+}
+
+function shiftNodeFromList(llRoot: LRoot): NodeIdx {
+  const node = llRoot.first;
+  llRoot.first = node.next;
+  return node.value;
+}
+
+function isEmptyList(llRoot: LRoot): boolean {
+  return llRoot.first == null;
+}
+
 export function toposort(nodes: Node[], edges: EdgesObject): Node[] {
   const refMap = buildRefMap(nodes);
   const outgoingEdges = buildGraphFromEdges(refMap, edges);
@@ -64,25 +86,25 @@ export function toposort(nodes: Node[], edges: EdgesObject): Node[] {
     });
   }
 
-  const queue: number[] = [];
+  let root: LRoot = { first: null, last: null };
 
   inDegree.forEach((degree, nodeIdx) => {
     if (degree === 0) {
-      queue.push(nodeIdx);
+      pushNodeToList(root, nodeIdx);
     }
   });
 
   const topoOrder: string[] = [];
 
-  while (queue.length > 0) {
-    const nodeIdx = queue.shift()!;
+  while (!isEmptyList(root)) {
+    const nodeIdx = shiftNodeFromList(root);
 
     topoOrder.push(nodes[nodeIdx]);
 
     outgoingEdges[nodeIdx].forEach((neighborIdx) => {
       const degree = --inDegree[neighborIdx];
       if (degree === 0) {
-        queue.push(neighborIdx);
+        pushNodeToList(root, neighborIdx);
       }
     });
   }
